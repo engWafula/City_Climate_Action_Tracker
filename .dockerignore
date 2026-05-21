@@ -1,0 +1,11 @@
+node_modules
+.next
+.env
+.env*.local
+.git
+coverage
+npm-debug.log
+Dockerfile
+docker-compose*.yml
+README.md
+AI_WORKFLOW.md

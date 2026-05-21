@@ -1,0 +1,67 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: deps
+    container_name: oef-climate-app
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://oef:oef@postgres:5432/oef_climate?schema=public
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+      NODE_ENV: development
+      NEXT_TELEMETRY_DISABLED: "1"
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    command: >
+      sh -c "npm run db:generate
+      && npm run db:push
+      && npm run db:seed
+      && npm run dev -- --hostname 0.0.0.0"
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app
+      - ./components:/app/components
+      - ./lib:/app/lib
+      - ./prisma:/app/prisma
+      - ./scripts:/app/scripts
+      - ./tests:/app/tests
+      - ./next.config.ts:/app/next.config.ts
+      - ./postcss.config.mjs:/app/postcss.config.mjs
+      - ./eslint.config.mjs:/app/eslint.config.mjs
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./vitest.config.ts:/app/vitest.config.ts
+      - next-cache:/app/.next
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: oef-climate-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: oef
+      POSTGRES_PASSWORD: oef
+      POSTGRES_DB: oef_climate
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oef -d oef_climate"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:
+  next-cache:
