@@ -25,10 +25,14 @@ Common variables:
 DATABASE_URL="postgresql://oef:oef@localhost:5433/oef_climate?schema=public"
 ADMIN_USERNAME="admin"
 ADMIN_PASSWORD="admin"
+AUTH_JWT_SECRET="replace-with-a-long-random-secret"
+AUTH_ACCESS_TOKEN_EXPIRES_IN_SECONDS="900"
 OPENAI_API_KEY=""
 ```
 
 - `ADMIN_USERNAME` and `ADMIN_PASSWORD` are used by the seed script to create the demo admin account.
+- `AUTH_JWT_SECRET` signs admin access and refresh JWTs. It is required in production.
+- `AUTH_ACCESS_TOKEN_EXPIRES_IN_SECONDS` controls how long the short-lived access token lasts. The default is 15 minutes. The refresh token is kept at 7 days.
 - `OPENAI_API_KEY` is optional. When it is not set, the free-text import feature uses the local fallback parser.
 - Docker Compose supplies its own internal `DATABASE_URL` for the app container.
 
@@ -50,7 +54,7 @@ On startup, the app container runs:
 
 ```bash
 npm run db:generate
-npm run db:push
+npm run db:push:accept-data-loss
 npm run db:seed
 npm run dev -- --hostname 0.0.0.0
 ```
@@ -111,7 +115,7 @@ Start the Next.js development server:
 npm run dev
 ```
 
-Open `http://localhost:3000` for the public dashboard and `http://localhost:3000/admin` for the admin role.
+Open `http://localhost:3000` for the public dashboard and `http://localhost:3000/admin` for the admin role. Both pages support `?cityId=<city-id>` for city-specific views.
 
 ## Build for Production
 
@@ -127,7 +131,7 @@ Start the production server after a successful build:
 npm run start
 ```
 
-For production deployments, set a production `DATABASE_URL`, a strong seeded admin username/password, and optionally `OPENAI_API_KEY`.
+For production deployments, set a production `DATABASE_URL`, a strong `AUTH_JWT_SECRET`, a strong seeded admin username/password, and optionally `OPENAI_API_KEY`.
 
 ## Quality checks
 
@@ -145,12 +149,13 @@ npm run build
 - `npm run start` starts the production server.
 - `npm run db:generate` generates Prisma Client.
 - `npm run db:push` syncs the Prisma schema to the database.
+- `npm run db:push:accept-data-loss` syncs the Prisma schema and accepts destructive changes for disposable development databases.
 - `npm run db:seed` inserts the demo admin user, sample Greenville city, and climate actions.
 - `npm run lint` runs ESLint.
 - `npm run test` runs Vitest.
 
 ## Notes
 
-- The app currently manages one city, seeded as Greenville. The data model supports multiple cities, but the UI intentionally keeps the exercise focused.
-- The on-track indicator uses credited reductions from active or completed actions in the target-year projection. Planned actions remain visible as commitments but do not count as achieved progress.
+- The app supports multiple cities. Admins can add, select, edit, and delete cities from `/admin`; the public dashboard can switch between configured cities.
+- The projected emissions chart and on-track indicator use all entered actions from their start year. Credited reduction metrics still count only active or completed actions.
 - The import feature calls OpenAI if `OPENAI_API_KEY` exists. If that request fails, or no key is configured, it still parses sample-style policy text with the local fallback parser.

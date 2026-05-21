@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
-import { FileText, MoreHorizontal, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { useMemo, useRef, useState, useTransition } from "react";
+import { CheckCircle2, FileText, MoreHorizontal, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { deleteClimateAction, upsertClimateAction } from "@/app/actions/city-actions";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,11 @@ type DraftAction = {
   annualReduction: number | "";
   status: ActionStatus | "";
   startYear: number | "";
+};
+
+type Toast = {
+  id: number;
+  message: string;
 };
 
 const emptyDraft: DraftAction = {
@@ -44,10 +49,25 @@ export function AdminActionManager({ cityId, cityName, actions }: { cityId: stri
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
   const [actionToDelete, setActionToDelete] = useState<ClimateAction | null>(null);
+  const [toast, setToast] = useState<Toast | null>(null);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [isDeleting, startDeleteTransition] = useTransition();
   const saveAction = upsertClimateAction.bind(null, cityId);
+
+  function showToast(message: string) {
+    const id = Date.now();
+
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+
+    setToast({ id, message });
+    toastTimeoutRef.current = setTimeout(() => {
+      setToast((currentToast) => (currentToast?.id === id ? null : currentToast));
+    }, 3500);
+  }
 
   function openAddModal() {
     setDraft(emptyDraft);
@@ -85,10 +105,13 @@ export function AdminActionManager({ cityId, cityName, actions }: { cityId: stri
       return;
     }
 
+    const deletedActionTitle = actionToDelete.title;
+
     startDeleteTransition(async () => {
       try {
         await deleteClimateAction(cityId, actionToDelete.id);
         setActionToDelete(null);
+        showToast(`Deleted “${deletedActionTitle}”.`);
       } catch {
         setMessage("Could not delete the action. Try again.");
       }
@@ -182,7 +205,7 @@ export function AdminActionManager({ cityId, cityName, actions }: { cityId: stri
               <div className="absolute right-0 top-10 z-20 w-40 overflow-hidden rounded-md border border-slate-200 bg-white py-1 text-left shadow-lg">
                 <button
                   type="button"
-                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
                   onClick={() => openEditModal(action)}
                 >
                   <Pencil className="h-4 w-4" aria-hidden />
@@ -190,7 +213,7 @@ export function AdminActionManager({ cityId, cityName, actions }: { cityId: stri
                 </button>
                 <button
                   type="button"
-                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-700 hover:bg-red-50"
+                  className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-sm text-red-700 hover:bg-red-50"
                   onClick={() => requestDelete(action)}
                 >
                   <Trash2 className="h-4 w-4" aria-hidden />
@@ -282,10 +305,14 @@ export function AdminActionManager({ cityId, cityName, actions }: { cityId: stri
 
               <form
                 action={(formData) => {
+                  const actionTitle = draft.title;
+                  const isEditing = Boolean(draft.id);
+
                   startTransition(async () => {
                     try {
                       await saveAction(formData);
                       closeModal();
+                      showToast(isEditing ? `Updated “${actionTitle}”.` : `Added “${actionTitle}”.`);
                     } catch {
                       setMessage("Could not save the action. Check the fields and try again.");
                     }
@@ -415,6 +442,13 @@ export function AdminActionManager({ cityId, cityName, actions }: { cityId: stri
               </Button>
             </div>
           </div>
+        </div>
+      ) : null}
+
+      {toast ? (
+        <div className="fixed right-6 top-6 z-[60] flex max-w-sm items-start gap-3 rounded-md border border-emerald-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-lg" role="status" aria-live="polite">
+          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" aria-hidden />
+          <p className="font-medium text-slate-900">{toast.message}</p>
         </div>
       ) : null}
     </>

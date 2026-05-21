@@ -17,7 +17,7 @@ services:
       CHOKIDAR_USEPOLLING: "true"
     command: >
       sh -c "npm run db:generate
-      && npm run db:push
+      && npm run db:push:accept-data-loss
       && npm run db:seed
       && npm run dev -- --hostname 0.0.0.0"
     ports:
@@ -33,6 +33,7 @@ services:
       - ./scripts:/app/scripts
       - ./tests:/app/tests
       - ./next.config.ts:/app/next.config.ts
+      - ./prisma.config.ts:/app/prisma.config.ts
       - ./postcss.config.mjs:/app/postcss.config.mjs
       - ./eslint.config.mjs:/app/eslint.config.mjs
       - ./tsconfig.json:/app/tsconfig.json

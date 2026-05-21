@@ -16,9 +16,6 @@ export default function AdminLoginPage() {
           </div>
         </div>
         <LoginForm />
-        <div className="mt-6 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-          Demo credentials: <span className="font-medium text-slate-900">admin</span> / <span className="font-medium text-slate-900">admin</span>
-        </div>
         <Link className="mt-4 block text-center text-sm font-medium text-emerald-700 hover:text-emerald-800" href="/">
           Back to public view
         </Link>

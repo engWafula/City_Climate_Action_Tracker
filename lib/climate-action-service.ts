@@ -1,10 +1,28 @@
 import { prisma } from "@/lib/prisma";
 import type { ActionInput, CitySettingsInput } from "@/lib/validation";
 
+export async function createCity(input: CitySettingsInput) {
+  return prisma.city.create({
+    data: input
+  });
+}
+
 export async function updateCitySettings(cityId: string, input: CitySettingsInput) {
   return prisma.city.update({
     where: { id: cityId },
     data: input
+  });
+}
+
+export async function deleteCity(cityId: string) {
+  const cityCount = await prisma.city.count();
+
+  if (cityCount <= 1) {
+    throw new Error("At least one city must remain configured.");
+  }
+
+  return prisma.city.delete({
+    where: { id: cityId }
   });
 }
 

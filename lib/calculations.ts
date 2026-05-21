@@ -8,6 +8,10 @@ export function isActionCredited(action: CityWithActions["actions"][number], yea
   return action.startYear <= year && action.status !== "planned";
 }
 
+export function isActionProjected(action: CityWithActions["actions"][number], year: number) {
+  return action.startYear <= year;
+}
+
 export function getTotalAnnualReduction(city: CityWithActions) {
   return city.actions.reduce((total, action) => total + action.annualReduction, 0);
 }
@@ -58,13 +62,13 @@ export function getProjectedEmissions(city: CityWithActions): ProjectionPoint[] 
 
   return Array.from({ length: endYear - startYear + 1 }, (_, index) => {
     const year = startYear + index;
-    const activeReduction = city.actions
-      .filter((action) => isActionCredited(action, year))
+    const projectedReduction = city.actions
+      .filter((action) => isActionProjected(action, year))
       .reduce((sum, action) => sum + action.annualReduction, 0);
 
     return {
       year,
-      emissions: Math.max(city.baselineEmissions - activeReduction, 0)
+      emissions: Math.max(city.baselineEmissions - projectedReduction, 0)
     };
   });
 }

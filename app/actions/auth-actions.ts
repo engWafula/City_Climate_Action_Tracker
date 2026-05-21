@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { authenticateAdmin, clearAdminSession, createAdminSession } from "@/lib/auth";
+import { authenticateAdmin, clearAdminTokens, createAdminTokens } from "@/lib/auth";
 
 export async function loginAdmin(_state: string | null, formData: FormData) {
   const username = String(formData.get("username") ?? "").trim();
@@ -12,11 +12,11 @@ export async function loginAdmin(_state: string | null, formData: FormData) {
     return "Invalid username or password.";
   }
 
-  await createAdminSession(user.id);
+  await createAdminTokens(user.id);
   redirect("/admin");
 }
 
 export async function logoutAdmin() {
-  await clearAdminSession();
+  await clearAdminTokens();
   redirect("/");
 }

@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/app-shell";
 import { ActionTable } from "@/components/action-table";
 import { Badge } from "@/components/ui/badge";
+import { CitySwitcher } from "@/components/city-switcher";
 import { MetricCard } from "@/components/metric-card";
 import { ProjectionChart } from "@/components/projection-chart";
 import { SectorBreakdown } from "@/components/sector-breakdown";
@@ -14,13 +15,21 @@ import {
   getTotalAnnualReduction,
   isCityOnTrack
 } from "@/lib/calculations";
-import { getPrimaryCity } from "@/lib/city-repository";
+import { getCities, getCityByIdOrPrimary } from "@/lib/city-repository";
 import { formatPercent, formatTons } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function PublicPage() {
-  const city = await getPrimaryCity();
+type PageSearchParams = Promise<{ cityId?: string | string[] }>;
+
+function getCityId(searchParams?: { cityId?: string | string[] }) {
+  return Array.isArray(searchParams?.cityId) ? searchParams.cityId[0] : searchParams?.cityId;
+}
+
+export default async function PublicPage({ searchParams }: { searchParams: PageSearchParams }) {
+  const params = await searchParams;
+  const city = await getCityByIdOrPrimary(getCityId(params));
+  const cities = await getCities();
   const totalReduction = getTotalAnnualReduction(city);
   const creditedReduction = getCreditedAnnualReduction(city);
   const reductionPercent = getReductionPercent(city);
@@ -40,7 +49,10 @@ export default async function PublicPage() {
             Actions are measured against a {formatTons(city.baselineEmissions)} ton annual CO2 baseline and a {city.targetYear} net-zero target.
           </p>
         </div>
-        <Badge tone={onTrack ? "green" : "red"}>{onTrack ? "On track" : "Not on track"}</Badge>
+        <div className="flex flex-col items-start gap-3 md:items-end">
+          <Badge tone={onTrack ? "green" : "red"}>{onTrack ? "On track" : "Not on track"}</Badge>
+          <CitySwitcher cities={cities} selectedCityId={city.id} />
+        </div>
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">

@@ -25,7 +25,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
             {isAdmin ? (
               <form action={logoutAdmin}>
-                <button className="rounded-md px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-950" type="submit">
+                <button className="cursor-pointer rounded-md px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-950" type="submit">
                   Sign out
                 </button>
               </form>

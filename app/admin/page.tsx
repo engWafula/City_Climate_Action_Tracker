@@ -1,15 +1,23 @@
 import { AppShell } from "@/components/app-shell";
 import { AdminActionManager } from "@/components/admin-action-manager";
-import { AdminCityForm } from "@/components/admin-city-form";
+import { AdminCityManager } from "@/components/admin-city-manager";
 import { requireAdmin } from "@/lib/auth";
-import { getPrimaryCity } from "@/lib/city-repository";
+import { getCities, getCityByIdOrPrimary } from "@/lib/city-repository";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminPage() {
+type PageSearchParams = Promise<{ cityId?: string | string[] }>;
+
+function getCityId(searchParams?: { cityId?: string | string[] }) {
+  return Array.isArray(searchParams?.cityId) ? searchParams.cityId[0] : searchParams?.cityId;
+}
+
+export default async function AdminPage({ searchParams }: { searchParams: PageSearchParams }) {
   await requireAdmin();
 
-  const city = await getPrimaryCity();
+  const params = await searchParams;
+  const city = await getCityByIdOrPrimary(getCityId(params));
+  const cities = await getCities();
 
   return (
     <AppShell>
@@ -22,7 +30,7 @@ export default async function AdminPage() {
       </section>
 
       <div className="space-y-6">
-        <AdminCityForm city={city} />
+        <AdminCityManager cities={cities} selectedCity={city} />
         <AdminActionManager cityId={city.id} cityName={city.name} actions={city.actions} />
       </div>
     </AppShell>
