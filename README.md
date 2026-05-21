@@ -61,7 +61,9 @@ npm run dev -- --hostname 0.0.0.0
 
 Source folders are bind-mounted into the app container, so changes to `app`, `components`, `lib`, `prisma`, and mounted config files reload without stopping the container.
 
-The default seeded admin login is:
+The seeded admin login comes from `ADMIN_USERNAME` and `ADMIN_PASSWORD`.
+
+With the default `.env.example` values, the seeded login is:
 
 ```bash
 username: admin
@@ -156,6 +158,6 @@ npm run build
 
 ## Notes
 
-- The app supports multiple cities. Admins can add, select, edit, and delete cities from `/admin`; the public dashboard can switch between configured cities.
+- The app supports multiple cities. Admins can add, select, and edit cities from `/admin`; the public dashboard can switch between configured cities.
 - The projected emissions chart and on-track indicator use all entered actions from their start year. Credited reduction metrics still count only active or completed actions.
 - The import feature calls OpenAI if `OPENAI_API_KEY` exists. If that request fails, or no key is configured, it still parses sample-style policy text with the local fallback parser.

@@ -6,8 +6,6 @@ import { MetricCard } from "@/components/metric-card";
 import { ProjectionChart } from "@/components/projection-chart";
 import { SectorBreakdown } from "@/components/sector-breakdown";
 import {
-  getCreditedAnnualReduction,
-  getCreditedReductionPercent,
   getProjectedEmissions,
   getReductionPercent,
   getRequiredAnnualPace,
@@ -31,9 +29,9 @@ export default async function PublicPage({ searchParams }: { searchParams: PageS
   const city = await getCityByIdOrPrimary(getCityId(params));
   const cities = await getCities();
   const totalReduction = getTotalAnnualReduction(city);
-  const creditedReduction = getCreditedAnnualReduction(city);
   const reductionPercent = getReductionPercent(city);
-  const creditedReductionPercent = getCreditedReductionPercent(city);
+  const activeActionCount = city.actions.filter((action) => action.status !== "planned").length;
+  const plannedActionCount = city.actions.length - activeActionCount;
   const sectorBreakdown = getSectorBreakdown(city);
   const projection = getProjectedEmissions(city);
   const onTrack = isCityOnTrack(city);
@@ -57,7 +55,7 @@ export default async function PublicPage({ searchParams }: { searchParams: PageS
 
       <section className="grid gap-4 md:grid-cols-3">
         <MetricCard title="Estimated commitments" value={`${formatTons(totalReduction)} tons/year`} detail={`${formatPercent(reductionPercent)} of baseline`} />
-        <MetricCard title="Credited reductions" value={`${formatTons(creditedReduction)} tons/year`} detail={`${formatPercent(creditedReductionPercent)} active or completed`} />
+        <MetricCard title="Climate actions" value={String(city.actions.length)} detail={`${activeActionCount} active/completed, ${plannedActionCount} planned`} />
         <MetricCard title="Required pace" value={`${formatTons(Math.round(requiredPace))} tons/year`} detail={`To reach net zero by ${city.targetYear}`} />
       </section>
 
