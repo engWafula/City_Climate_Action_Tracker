@@ -42,6 +42,8 @@ const statusTones: Record<ActionStatus, "green" | "blue" | "slate"> = {
   completed: "green"
 };
 
+const startYearOptions = Array.from({ length: 2100 - 1990 + 1 }, (_, index) => 1990 + index);
+
 export function AdminActionManager({ cityId, cityName, actions }: { cityId: string; cityName: string; actions: ClimateAction[] }) {
   const [draft, setDraft] = useState<DraftAction>(emptyDraft);
   const [text, setText] = useState("");
@@ -394,16 +396,22 @@ export function AdminActionManager({ cityId, cityName, actions }: { cityId: stri
                     </label>
                     <label className="block space-y-2 text-sm font-medium text-slate-700">
                       Start year
-                      <Input
+                      <Select
                         name="startYear"
-                        type="number"
-                        min={1990}
-                        max={2100}
-                        value={draft.startYear}
+                        className="mt-2"
+                        value={String(draft.startYear)}
                         onChange={(event) => setDraft({ ...draft, startYear: event.target.value === "" ? "" : Number(event.target.value) })}
-                        placeholder="e.g. 2027"
                         required
-                      />
+                      >
+                        <option value="" disabled>
+                          Select year
+                        </option>
+                        {startYearOptions.map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
+                      </Select>
                     </label>
                   </div>
                 </div>
