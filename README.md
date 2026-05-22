@@ -157,5 +157,5 @@ npm run build
 ## Notes
 
 - The app supports multiple cities. Admins can add, select, and edit cities from `/admin`; the public dashboard can switch between configured cities.
-- The projected emissions chart and on-track indicator use all entered actions from their start year. Credited reduction metrics still count only active or completed actions.
+- The projected emissions chart and on-track indicator use all entered actions from their start year. The public metrics show estimated commitments, total climate actions, and the required annual reduction pace to reach the selected city's net-zero target.
 - The import feature calls OpenAI if `OPENAI_API_KEY` exists. If that request fails, or no key is configured, it still parses sample-style policy text with the local fallback parser.
