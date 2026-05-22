@@ -25,14 +25,12 @@ Common variables:
 DATABASE_URL="postgresql://oef:oef@localhost:5433/oef_climate?schema=public"
 ADMIN_USERNAME="admin"
 ADMIN_PASSWORD="admin"
-AUTH_JWT_SECRET="replace-with-a-long-random-secret"
-AUTH_ACCESS_TOKEN_EXPIRES_IN_SECONDS="900"
+AUTH_SECRET="replace-with-a-long-random-secret"
 OPENAI_API_KEY=""
 ```
 
 - `ADMIN_USERNAME` and `ADMIN_PASSWORD` are used by the seed script to create the demo admin account.
-- `AUTH_JWT_SECRET` signs admin access and refresh JWTs. It is required in production.
-- `AUTH_ACCESS_TOKEN_EXPIRES_IN_SECONDS` controls how long the short-lived access token lasts. The default is 15 minutes. The refresh token is kept at 7 days.
+- `AUTH_SECRET` is used by NextAuth to sign and encrypt authentication data. It is required in production.
 - `OPENAI_API_KEY` is optional. When it is not set, the free-text import feature uses the local fallback parser.
 - Docker Compose supplies its own internal `DATABASE_URL` for the app container.
 
@@ -59,7 +57,7 @@ npm run db:seed
 npm run dev -- --hostname 0.0.0.0
 ```
 
-Source folders are bind-mounted into the app container, so changes to `app`, `components`, `lib`, `prisma`, and mounted config files reload without stopping the container.
+The project folder is bind-mounted into the app container for hot reload. Container dependencies live in a named `node-modules` volume, so host and container installs do not fight each other.
 
 The seeded admin login comes from `ADMIN_USERNAME` and `ADMIN_PASSWORD`.
 
@@ -133,7 +131,7 @@ Start the production server after a successful build:
 npm run start
 ```
 
-For production deployments, set a production `DATABASE_URL`, a strong `AUTH_JWT_SECRET`, a strong seeded admin username/password, and optionally `OPENAI_API_KEY`.
+For production deployments, set a production `DATABASE_URL`, a strong `AUTH_SECRET`, a strong seeded admin username/password, and optionally `OPENAI_API_KEY`.
 
 ## Quality checks
 

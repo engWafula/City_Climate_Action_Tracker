@@ -1,9 +1,6 @@
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: deps
+    build: .
     container_name: oef-climate-app
     restart: unless-stopped
     environment:
@@ -11,12 +8,14 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+      AUTH_SECRET: ${AUTH_SECRET:-development-auth-secret}
       NODE_ENV: development
       NEXT_TELEMETRY_DISABLED: "1"
       WATCHPACK_POLLING: "true"
       CHOKIDAR_USEPOLLING: "true"
     command: >
-      sh -c "npm run db:generate
+      sh -c "npm install
+      && npm run db:generate
       && npm run db:push:accept-data-loss
       && npm run db:seed
       && npm run dev -- --hostname 0.0.0.0"
@@ -26,24 +25,9 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - ./app:/app/app
-      - ./components:/app/components
-      - ./lib:/app/lib
-      - ./prisma:/app/prisma
-      - ./scripts:/app/scripts
-      - ./tests:/app/tests
-      - ./next.config.ts:/app/next.config.ts
-      - ./prisma.config.ts:/app/prisma.config.ts
-      - ./postcss.config.mjs:/app/postcss.config.mjs
-      - ./eslint.config.mjs:/app/eslint.config.mjs
-      - ./tsconfig.json:/app/tsconfig.json
-      - ./vitest.config.ts:/app/vitest.config.ts
+      - .:/app
+      - node-modules:/app/node_modules
       - next-cache:/app/.next
-    healthcheck:
-      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
-      interval: 10s
-      timeout: 5s
-      retries: 12
 
   postgres:
     image: postgres:16-alpine
@@ -65,4 +49,5 @@ services:
 
 volumes:
   postgres-data:
+  node-modules:
   next-cache:
