@@ -14,18 +14,6 @@ export async function updateCitySettings(cityId: string, input: CitySettingsInpu
   });
 }
 
-export async function deleteCity(cityId: string) {
-  const cityCount = await prisma.city.count();
-
-  if (cityCount <= 1) {
-    throw new Error("At least one city must remain configured.");
-  }
-
-  return prisma.city.delete({
-    where: { id: cityId }
-  });
-}
-
 export async function saveClimateAction(cityId: string, input: ActionInput) {
   if (!input.id) {
     return prisma.climateAction.create({

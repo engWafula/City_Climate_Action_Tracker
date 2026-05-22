@@ -7,7 +7,7 @@ I used Codex as my  AI coding partner inside the local repo. My workflow was int
 - **Tool used:** Codex, with local terminal access for file inspection, edits, dependency installation, Docker checks, and verification.
 - **General workflow:** I broke the project into slices: data model, public dashboard, admin CRUD, AI import, authentication, multi-city support, Docker setup, and UX polish.
 - **Context strategy:** Before each major change, I had Codex read the relevant source files instead of prompting from memory. For example, before changing auth it inspected `lib/auth.ts`, `app/actions/auth-actions.ts`, `components/login-form.tsx`, and `prisma/schema.prisma`.
-- **Verification loop:** After changes I ran `npm run lint`, `npm run test`, `npx tsc --noEmit`, `npm run build`, and `docker compose config --quiet` where relevant.
+- **Verification loop:** After changes I ran `npm run lint`, `npm run test`, `npx tsc --noEmit`, `npm run build`.
 
 ## Where AI Saved Significant Time
 

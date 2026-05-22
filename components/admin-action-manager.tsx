@@ -1,48 +1,25 @@
 "use client";
 
 import { useMemo, useRef, useState, useTransition } from "react";
-import { CheckCircle2, FileText, MoreHorizontal, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 import { deleteClimateAction, upsertClimateAction } from "@/app/actions/city-actions";
+import { AdminActionDeleteDialog } from "@/components/admin-action-delete-dialog";
+import { AdminActionFormDialog } from "@/components/admin-action-form-dialog";
+import { AdminActionToast, type Toast } from "@/components/admin-action-toast";
+import { emptyDraft, type DraftAction } from "@/components/admin-action-types";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { sectorLabels, statusLabels } from "@/lib/labels";
-import { actionStatuses, sectors, type ActionStatus, type ClimateAction, type Sector } from "@/lib/types";
+import type { ActionStatus, ClimateAction } from "@/lib/types";
 import { formatTons } from "@/lib/utils";
-
-type DraftAction = {
-  id?: string;
-  title: string;
-  sector: Sector | "";
-  annualReduction: number | "";
-  status: ActionStatus | "";
-  startYear: number | "";
-};
-
-type Toast = {
-  id: number;
-  message: string;
-};
-
-const emptyDraft: DraftAction = {
-  title: "",
-  sector: "",
-  annualReduction: "",
-  status: "",
-  startYear: ""
-};
 
 const statusTones: Record<ActionStatus, "green" | "blue" | "slate"> = {
   planned: "slate",
   in_progress: "blue",
   completed: "green"
 };
-
-const startYearOptions = Array.from({ length: 2100 - 1990 + 1 }, (_, index) => 1990 + index);
 
 export function AdminActionManager({ cityId, cityName, actions }: { cityId: string; cityName: string; actions: ClimateAction[] }) {
   const [draft, setDraft] = useState<DraftAction>(emptyDraft);
@@ -259,206 +236,43 @@ export function AdminActionManager({ cityId, cityName, actions }: { cityId: stri
       </Card>
 
       {isModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
-          <div
-            className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-lg bg-white shadow-xl"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="action-modal-title"
-          >
-            <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-7 py-6">
-              <div>
-                <h2 id="action-modal-title" className="text-2xl font-semibold text-slate-950">
-                  {draft.id ? "Edit action" : "Add action"}
-                </h2>
-                <p className="mt-2 text-sm text-slate-500">Use free text to prefill the draft, or enter the action details manually.</p>
-              </div>
-              <Button type="button" variant="ghost" size="icon" aria-label="Close action modal" onClick={closeModal}>
-                <X className="h-4 w-4" aria-hidden />
-              </Button>
-            </div>
+        <AdminActionFormDialog
+          cityName={cityName}
+          draft={draft}
+          text={text}
+          message={message}
+          isImporting={isImporting}
+          isPending={isPending}
+          onClose={closeModal}
+          onDraftChange={setDraft}
+          onTextChange={setText}
+          onImport={() => void importFromText()}
+          onSubmit={(formData) => {
+            const actionTitle = draft.title;
+            const isEditing = Boolean(draft.id);
 
-            <div className="grid flex-1 gap-6 overflow-y-auto px-7 py-7 lg:grid-cols-[0.75fr_1.25fr]">
-              <aside className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-5">
-                <header className="space-y-1">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
-                    <FileText className="h-4 w-4 text-emerald-700" aria-hidden />
-                    Import from free text
-                  </div>
-                  <p className="text-sm text-slate-500">Paste policy notes to fill the draft fields.</p>
-                </header>
-                <label className="space-y-2 text-sm font-medium text-slate-700">
-                  Source text
-                  <Textarea
-                    value={text}
-                    onChange={(event) => setText(event.target.value)}
-                    placeholder="The city council approved a $2M investment to convert all street lighting to LED by 2027..."
-                    className="min-h-56 bg-white"
-                  />
-                </label>
-                <div className="space-y-3">
-                  <Button type="button" variant="secondary" className="w-full" onClick={() => void importFromText()} disabled={isImporting}>
-                    <Sparkles className="h-4 w-4" aria-hidden />
-                    {isImporting ? "Extracting..." : "Extract action"}
-                  </Button>
-                  {message ? <p className="text-sm text-slate-500">{message}</p> : null}
-                </div>
-              </aside>
-
-              <form
-                action={(formData) => {
-                  const actionTitle = draft.title;
-                  const isEditing = Boolean(draft.id);
-
-                  startTransition(async () => {
-                    try {
-                      await saveAction(formData);
-                      closeModal();
-                      showToast(isEditing ? `Updated “${actionTitle}”.` : `Added “${actionTitle}”.`);
-                    } catch {
-                      setMessage("Could not save the action. Check the fields and try again.");
-                    }
-                  });
-                }}
-                className="flex min-h-full flex-col"
-              >
-                <div className="space-y-7">
-                  <header className="space-y-1">
-                    <h3 className="text-sm font-semibold uppercase text-slate-500">Action details</h3>
-                    <p className="text-sm text-slate-500">Complete the fields before saving the action to {cityName}.</p>
-                  </header>
-                  <input type="hidden" name="id" value={draft.id ?? ""} />
-
-                  <label className="block space-y-2 text-sm font-medium text-slate-700">
-                    Action title
-                    <Input
-                      name="title"
-                      value={draft.title}
-                      onChange={(event) => setDraft({ ...draft, title: event.target.value })}
-                      placeholder="e.g. LED street lighting conversion"
-                      required
-                    />
-                  </label>
-
-                  <div className="grid gap-5 pt-1 sm:grid-cols-2">
-                    <label className="block space-y-2 text-sm font-medium text-slate-700">
-                      Sector
-                      <Select
-                        name="sector"
-                        className="mt-2"
-                        value={draft.sector}
-                        onChange={(event) => setDraft({ ...draft, sector: event.target.value as Sector })}
-                        required
-                      >
-                        <option value="" disabled>
-                          Select sector
-                        </option>
-                        {sectors.map((sector) => (
-                          <option key={sector} value={sector}>
-                            {sectorLabels[sector]}
-                          </option>
-                        ))}
-                      </Select>
-                    </label>
-                    <label className="block space-y-2 text-sm font-medium text-slate-700">
-                      Status
-                      <Select
-                        name="status"
-                        className="mt-2"
-                        value={draft.status}
-                        onChange={(event) => setDraft({ ...draft, status: event.target.value as ActionStatus })}
-                        required
-                      >
-                        <option value="" disabled>
-                          Select status
-                        </option>
-                        {actionStatuses.map((status) => (
-                          <option key={status} value={status}>
-                            {statusLabels[status]}
-                          </option>
-                        ))}
-                      </Select>
-                    </label>
-                  </div>
-
-                  <div className="grid gap-5 pt-1 sm:grid-cols-2">
-                    <label className="block space-y-2 text-sm font-medium text-slate-700">
-                      Annual CO2 reduction
-                      <Input
-                        name="annualReduction"
-                        type="number"
-                        min={0}
-                        value={draft.annualReduction}
-                        onChange={(event) => setDraft({ ...draft, annualReduction: event.target.value === "" ? "" : Number(event.target.value) })}
-                        placeholder="e.g. 9500"
-                        required
-                      />
-                    </label>
-                    <label className="block space-y-2 text-sm font-medium text-slate-700">
-                      Start year
-                      <Select
-                        name="startYear"
-                        className="mt-2"
-                        value={String(draft.startYear)}
-                        onChange={(event) => setDraft({ ...draft, startYear: event.target.value === "" ? "" : Number(event.target.value) })}
-                        required
-                      >
-                        <option value="" disabled>
-                          Select year
-                        </option>
-                        {startYearOptions.map((year) => (
-                          <option key={year} value={year}>
-                            {year}
-                          </option>
-                        ))}
-                      </Select>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="mt-8 flex items-center justify-end gap-3 border-t border-slate-200 pt-5">
-                  <Button type="button" variant="ghost" onClick={closeModal}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isPending}>
-                    <Plus className="h-4 w-4" aria-hidden />
-                    {draft.id ? "Update action" : "Save action"}
-                  </Button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
+            startTransition(async () => {
+              try {
+                await saveAction(formData);
+                closeModal();
+                showToast(isEditing ? `Updated “${actionTitle}”.` : `Added “${actionTitle}”.`);
+              } catch {
+                setMessage("Could not save the action. Check the fields and try again.");
+              }
+            });
+          }}
+        />
       ) : null}
 
-      {actionToDelete ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
-          <div className="w-full max-w-md rounded-lg bg-white shadow-xl" role="dialog" aria-modal="true" aria-labelledby="delete-action-title">
-            <div className="space-y-2 border-b border-slate-200 px-6 py-5">
-              <h2 id="delete-action-title" className="text-lg font-semibold text-slate-950">
-                Delete action?
-              </h2>
-              <p className="text-sm text-slate-500">This will permanently remove “{actionToDelete.title}” from {cityName}.</p>
-            </div>
-            <div className="flex items-center justify-end gap-3 px-6 py-5">
-              <Button type="button" variant="ghost" onClick={() => setActionToDelete(null)}>
-                Cancel
-              </Button>
-              <Button type="button" variant="destructive" onClick={confirmDelete} disabled={isDeleting}>
-                <Trash2 className="h-4 w-4" aria-hidden />
-                {isDeleting ? "Deleting..." : "Delete action"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <AdminActionDeleteDialog
+        action={actionToDelete}
+        cityName={cityName}
+        isDeleting={isDeleting}
+        onCancel={() => setActionToDelete(null)}
+        onConfirm={confirmDelete}
+      />
 
-      {toast ? (
-        <div className="fixed right-6 top-6 z-[60] flex max-w-sm items-start gap-3 rounded-md border border-emerald-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-lg" role="status" aria-live="polite">
-          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" aria-hidden />
-          <p className="font-medium text-slate-900">{toast.message}</p>
-        </div>
-      ) : null}
+      <AdminActionToast toast={toast} />
     </>
   );
 }

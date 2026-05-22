@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import {
   createCity as createCityRecord,
-  deleteCity as deleteCityRecord,
   removeClimateAction,
   saveClimateAction,
   updateCitySettings as updateCitySettingsRecord
@@ -41,16 +40,6 @@ export async function updateCitySettings(cityId: string, formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/admin");
-}
-
-export async function deleteCity(cityId: string) {
-  await requireAdmin();
-
-  await deleteCityRecord(cityId);
-
-  revalidatePath("/");
-  revalidatePath("/admin");
-  redirect("/admin");
 }
 
 export async function upsertClimateAction(cityId: string, formData: FormData) {
